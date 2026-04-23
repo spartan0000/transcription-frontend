@@ -1,0 +1,339 @@
+/* ── Layout ─────────────────────────────────────────────── */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fa;
+  color: #1a1a2e;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.app-header {
+  background: #1a3a5c;
+  color: #fff;
+  padding: 16px 32px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.app-main {
+  flex: 1;
+  max-width: 860px;
+  width: 100%;
+  margin: 32px auto;
+  padding: 0 16px 48px;
+  box-sizing: border-box;
+}
+
+/* ── Error Banner ────────────────────────────────────────── */
+.error-banner {
+  background: #fde8e8;
+  border: 1px solid #f5c6c6;
+  color: #a00;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-banner strong {
+  flex-shrink: 0;
+}
+
+.error-dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #a00;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-record {
+  background: #1a3a5c;
+  color: #fff;
+}
+.btn-record:hover:not(:disabled) { background: #24527e; }
+
+.btn-stop {
+  background: #c0392b;
+  color: #fff;
+}
+.btn-stop:hover { background: #a93226; }
+
+.btn-submit {
+  background: #1a6e3c;
+  color: #fff;
+  font-size: 1rem;
+  padding: 12px 28px;
+}
+.btn-submit:hover:not(:disabled) { background: #1e8a4a; }
+
+.btn-add {
+  background: #eaf4ff;
+  color: #1a3a5c;
+  border: 1px solid #b3d4f0;
+  padding: 6px 14px;
+  font-size: 0.875rem;
+}
+.btn-add:hover { background: #cce4f6; }
+
+.btn-remove {
+  background: #fde8e8;
+  color: #a00;
+  border: 1px solid #f5c6c6;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
+.btn-remove:hover { background: #f9c5c5; }
+
+.btn-secondary {
+  background: #e8edf2;
+  color: #1a1a2e;
+  margin-top: 12px;
+}
+.btn-secondary:hover { background: #d0d9e4; }
+
+/* ── Recorder Card ───────────────────────────────────────── */
+.recorder-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  padding: 40px;
+  text-align: center;
+}
+
+.recorder-card h2 { margin: 0 0 8px; }
+
+.recorder-hint {
+  color: #555;
+  margin: 0 0 28px;
+  max-width: 480px;
+  margin-inline: auto;
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.pulse-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e74c3c;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.25); }
+}
+
+.uploading-msg {
+  color: #555;
+  font-style: italic;
+}
+
+/* ── Report Form ─────────────────────────────────────────── */
+.report-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.report-form h2 {
+  margin: 0 0 4px;
+}
+
+.review-hint {
+  color: #555;
+  margin: 0 0 4px;
+}
+
+/* ── Form Sections ───────────────────────────────────────── */
+.form-section {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 24px 28px;
+}
+
+.form-section h3 {
+  margin: 0 0 18px;
+  font-size: 1rem;
+  color: #1a3a5c;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #e4edf6;
+  padding-bottom: 10px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.section-header h3 {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* ── Two-column grid ─────────────────────────────────────── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+}
+
+@media (max-width: 600px) {
+  .two-col { grid-template-columns: 1fr; }
+}
+
+.col-span-2 { grid-column: span 2; }
+
+/* ── Field Groups ────────────────────────────────────────── */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.field-group input,
+.field-group select {
+  padding: 8px 10px;
+  border: 1px solid #c8d5e2;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  background: #fafcff;
+  color: #1a1a2e;
+  transition: border-color 0.15s;
+}
+
+.field-group input:focus,
+.field-group select:focus {
+  outline: none;
+  border-color: #1a3a5c;
+  background: #fff;
+}
+
+/* ── BBPS ────────────────────────────────────────────────── */
+.bbps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 700px) {
+  .bbps-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.bbps-total .bbps-total-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  border-radius: 5px;
+  background: #eaf4ff;
+  border: 1px solid #b3d4f0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a3a5c;
+}
+
+/* ── Polyp / Finding Cards ───────────────────────────────── */
+.item-card {
+  border: 1px solid #dde6f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 14px;
+  background: #f9fbfd;
+}
+
+.item-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  font-weight: 600;
+  color: #1a3a5c;
+}
+
+.empty-msg {
+  color: #888;
+  font-style: italic;
+  margin: 10px 0 0;
+}
+
+/* ── Form Actions ────────────────────────────────────────── */
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0 16px;
+}
+
+.submit-hint {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+/* ── Submitted Card ──────────────────────────────────────── */
+.submitted-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  padding: 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.submitted-card h2 {
+  margin: 0;
+  color: #1a6e3c;
+}
