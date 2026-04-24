@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react';
+import { API_BASE } from '../apiConfig.js';
 
 export default function AudioRecorder({ onTranscribed, onError }) {
   const [phase, setPhase] = useState('idle'); // idle | recording | uploading
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
+  const fileInputRef = useRef(null);
 
   async function startRecording() {
     chunksRef.current = [];
@@ -32,10 +34,24 @@ export default function AudioRecorder({ onTranscribed, onError }) {
   async function uploadRecording() {
     const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
     const formData = new FormData();
-    formData.append('audio', blob, 'recording.webm');
+    formData.append('file', blob, 'recording.webm');
+    await upload(formData);
+  }
 
+  async function handleFileSelected(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Reset so selecting the same file again still fires onChange
+    e.target.value = '';
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    setPhase('uploading');
+    await upload(formData);
+  }
+
+  async function upload(formData) {
     try {
-      const res = await fetch('/api/transcribe', {
+      const res = await fetch(`${API_BASE}/transcribe`, {
         method: 'POST',
         body: formData,
       });
@@ -56,9 +72,27 @@ export default function AudioRecorder({ onTranscribed, onError }) {
       </p>
 
       {phase === 'idle' && (
-        <button className="btn btn-record" onClick={startRecording}>
-          Start Recording
-        </button>
+        <div className="recorder-actions">
+          <button className="btn btn-record" onClick={startRecording}>
+            Start Recording
+          </button>
+
+          <span className="recorder-divider">or</span>
+
+          <button
+            className="btn btn-upload"
+            onClick={() => fileInputRef.current.click()}
+          >
+            Upload Audio File
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            hidden
+            onChange={handleFileSelected}
+          />
+        </div>
       )}
 
       {phase === 'recording' && (
