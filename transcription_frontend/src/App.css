@@ -290,6 +290,19 @@
   .bbps-grid { grid-template-columns: 1fr 1fr; }
 }
 
+.calculated-value {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: #eaf4ff;
+  border: 1px solid #b3d4f0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a3a5c;
+  min-height: 38px;
+}
+
 .bbps-total .bbps-total-value {
   display: flex;
   align-items: center;
