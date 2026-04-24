@@ -27,7 +27,7 @@ The submit button is disabled until all three BBPS segment scores have been sele
 | `POST` | `/transcribe` | Accepts `multipart/form-data` with an `audio` file; returns `ColonoscopyReportWithMetadata` JSON |
 | `POST` | `/submit-report` | Accepts `ColonoscopyReportWithMetadata` JSON; writes to DB, generates PDF, returns `{ pdf_url }` |
 
-The Vite dev server proxies `/api/*` to `http://localhost:8000`, stripping the `/api` prefix.
+The Vite dev server proxies `/api/*` to the configured backend URL, stripping the `/api` prefix (see Environment variables below).
 
 ## Stack
 
@@ -36,14 +36,46 @@ The Vite dev server proxies `/api/*` to `http://localhost:8000`, stripping the `
 - **Native `fetch`** for all HTTP — no Axios or other HTTP libraries
 - No additional runtime dependencies beyond `react` and `react-dom`
 
+## Environment variables
+
+Two variables control where the app sends API requests. Defaults live in `.env` inside the project directory; override them by creating a `.env.local` file alongside it (gitignored, never committed).
+
+| Variable | Used by | Default | Purpose |
+|---|---|---|---|
+| `VITE_API_BASE_URL` | Browser (build-time) | `/api` | URL prefix for all `fetch` calls. Keep as `/api` for dev; set to the full backend URL for production. |
+| `API_PROXY_TARGET` | Vite dev server only | `http://localhost:8000` | Where `/api/*` requests are forwarded during `npm run dev`. Ignored in production builds. |
+
+### Local development (defaults work out of the box)
+
+```bash
+npm run dev   # proxies /api/* → http://localhost:8000
+```
+
+### Pointing at a different local port
+
+Create `transcription_frontend/.env.local`:
+
+```
+API_PROXY_TARGET=http://localhost:9000
+```
+
+### Production build targeting a deployed backend
+
+Set `VITE_API_BASE_URL` in your deployment environment (or in `.env.local` before building):
+
+```
+VITE_API_BASE_URL=https://api.yourserver.com
+```
+
+The proxy is not involved in production builds — the browser will call `https://api.yourserver.com/transcribe` and `https://api.yourserver.com/submit-report` directly.
+
 ## Development
 
 ```bash
+cd transcription_frontend
 npm install
 npm run dev
 ```
-
-The backend FastAPI service must be running on `http://localhost:8000`. To change the proxy target, edit `server.proxy` in `vite.config.js`.
 
 ## Build
 
