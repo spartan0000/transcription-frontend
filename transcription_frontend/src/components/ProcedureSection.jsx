@@ -49,9 +49,9 @@ export default function ProcedureSection({ report, onChange }) {
             type="number"
             min="0"
             step="0.1"
-            value={report.withdrawal_time ?? ''}
+            value={report.withdrawal_time != null ? +(report.withdrawal_time / 60).toFixed(2) : ''}
             onChange={(e) =>
-              onChange({ withdrawal_time: e.target.value === '' ? null : Number(e.target.value) })
+              onChange({ withdrawal_time: e.target.value === '' ? null : Number(e.target.value) * 60 })
             }
           />
         </div>

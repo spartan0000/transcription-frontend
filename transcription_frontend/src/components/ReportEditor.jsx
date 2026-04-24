@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_BASE } from '../apiConfig.js';
 import MetadataSection from './MetadataSection.jsx';
 import ProcedureSection from './ProcedureSection.jsx';
 import BBPSSection from './BBPSSection.jsx';
@@ -45,13 +46,14 @@ export default function ReportEditor({ initialData, onSubmitted, onError }) {
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/submit-report', {
+      const res = await fetch(`${API_BASE}/submit-report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const result = await res.json();
+      if (result.pdf_url) window.open(result.pdf_url, '_blank', 'noopener,noreferrer');
       onSubmitted(result);
     } catch (err) {
       onError(err.message);
@@ -79,7 +81,7 @@ export default function ReportEditor({ initialData, onSubmitted, onError }) {
           className="btn btn-submit"
           disabled={submitting || !bbpsComplete}
         >
-          {submitting ? 'Submitting…' : 'Confirm &amp; Generate PDF'}
+          {submitting ? 'Submitting…' : 'Submit and Generate PDF'}
         </button>
         {!bbpsComplete && (
           <span className="submit-hint">All BBPS segment scores are required to submit.</span>

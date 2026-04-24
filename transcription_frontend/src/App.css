@@ -161,6 +161,26 @@
   50% { opacity: 0.5; transform: scale(1.25); }
 }
 
+.recorder-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.recorder-divider {
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.btn-upload {
+  background: #f0f4f8;
+  color: #1a3a5c;
+  border: 1px solid #b3c8de;
+}
+.btn-upload:hover { background: #dde8f2; }
+
 .uploading-msg {
   color: #555;
   font-style: italic;
