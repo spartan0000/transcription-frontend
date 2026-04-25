@@ -19,11 +19,6 @@ export default function ReportEditor({ initialData, onSubmitted, onError }) {
     setReport((prev) => ({ ...prev, ...patch }));
   }
 
-  const bbpsTotal =
-    (report.bbps_right ?? 0) +
-    (report.bbps_transverse ?? 0) +
-    (report.bbps_left ?? 0);
-
   const bbpsComplete =
     report.bbps_right != null &&
     report.bbps_transverse != null &&
@@ -36,12 +31,11 @@ export default function ReportEditor({ initialData, onSubmitted, onError }) {
       return;
     }
 
+    // eslint-disable-next-line no-unused-vars
+    const { withdrawal_time, ...reportFields } = report;
     const payload = {
       metadata,
-      report: {
-        ...report,
-        bbps_total: bbpsTotal,
-      },
+      report: reportFields,
     };
 
     setSubmitting(true);

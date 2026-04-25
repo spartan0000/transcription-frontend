@@ -43,17 +43,13 @@ export default function ProcedureSection({ report, onChange }) {
         </div>
 
         <div className="field-group">
-          <label htmlFor="withdrawal_time">Withdrawal Time (min)</label>
-          <input
-            id="withdrawal_time"
-            type="number"
-            min="0"
-            step="0.1"
-            value={report.withdrawal_time != null ? +(report.withdrawal_time / 60).toFixed(2) : ''}
-            onChange={(e) =>
-              onChange({ withdrawal_time: e.target.value === '' ? null : Number(e.target.value) * 60 })
-            }
-          />
+          <label>Withdrawal Time (min)</label>
+          <div className="calculated-value" aria-label="Preliminary withdrawal time in minutes">
+            {report.withdrawal_time != null
+              ? `${+(report.withdrawal_time / 60).toFixed(2)} min`
+              : '—'}
+          </div>
+          <span className="field-note">Calculated by backend on final submission</span>
         </div>
       </div>
     </section>
