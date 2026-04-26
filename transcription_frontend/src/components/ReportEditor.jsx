@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { API_BASE } from '../apiConfig.js';
+import { API_BASE, API_ORIGIN } from '../apiConfig.js';
 import MetadataSection from './MetadataSection.jsx';
 import ProcedureSection from './ProcedureSection.jsx';
 import BBPSSection from './BBPSSection.jsx';
@@ -40,14 +40,14 @@ export default function ReportEditor({ initialData, onSubmitted, onError }) {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE}/submit-report`, {
+      const res = await fetch(`${API_BASE}/write`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const result = await res.json();
-      if (result.pdf_url) window.open(result.pdf_url, '_blank', 'noopener,noreferrer');
+      if (result.pdf_url) window.open(`${API_ORIGIN}${result.pdf_url}`, '_blank', 'noopener,noreferrer');
       onSubmitted(result);
     } catch (err) {
       onError(err.message);

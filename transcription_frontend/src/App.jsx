@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AudioRecorder from './components/AudioRecorder.jsx';
 import ReportEditor from './components/ReportEditor.jsx';
+import { API_ORIGIN } from './apiConfig.js';
 import './App.css';
 
 export default function App() {
@@ -65,7 +66,7 @@ export default function App() {
             {submittedResult?.pdf_url && (
               <a
                 className="btn btn-record"
-                href={submittedResult.pdf_url}
+                href={`${API_ORIGIN}${submittedResult.pdf_url}`}
                 target="_blank"
                 rel="noreferrer"
               >
