@@ -7,11 +7,13 @@ import './App.css';
 export default function App() {
   const [phase, setPhase] = useState('record'); // record | review | submitted
   const [reportData, setReportData] = useState(null);
+  const [extractionFailed, setExtractionFailed] = useState(false);
   const [submittedResult, setSubmittedResult] = useState(null);
   const [error, setError] = useState(null);
 
   function handleTranscribed(data) {
-    setReportData(data);
+    setReportData(data.report);
+    setExtractionFailed(data.status === 'failed');
     setError(null);
     setPhase('review');
   }
@@ -29,6 +31,7 @@ export default function App() {
   function reset() {
     setPhase('record');
     setReportData(null);
+    setExtractionFailed(false);
     setSubmittedResult(null);
     setError(null);
   }
@@ -54,6 +57,7 @@ export default function App() {
         {phase === 'review' && reportData && (
           <ReportEditor
             initialData={reportData}
+            extractionFailed={extractionFailed}
             onSubmitted={handleSubmitted}
             onError={handleError}
           />
