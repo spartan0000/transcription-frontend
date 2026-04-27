@@ -32,6 +32,15 @@
 }
 
 /* ── Error Banner ────────────────────────────────────────── */
+.extraction-failed-banner {
+  background: #fff8e1;
+  border: 1px solid #f5c842;
+  color: #7a5c00;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+
 .error-banner {
   background: #fde8e8;
   border: 1px solid #f5c6c6;
@@ -159,6 +168,48 @@
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(1.25); }
+}
+
+.timestamp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.timestamp-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-timestamp {
+  background: #1a6e3c;
+  color: #fff;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  min-width: 172px;
+  flex-shrink: 0;
+}
+.btn-timestamp:hover { background: #1e8a4a; }
+
+.timestamp-input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #c8d5e2;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  background: #fafcff;
+  color: #1a1a2e;
+  min-width: 0;
+}
+.timestamp-input:focus {
+  outline: none;
+  border-color: #1a3a5c;
+  background: #fff;
 }
 
 .recorder-actions {

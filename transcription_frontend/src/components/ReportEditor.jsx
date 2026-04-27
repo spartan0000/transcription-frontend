@@ -6,7 +6,7 @@ import BBPSSection from './BBPSSection.jsx';
 import PolypList from './PolypList.jsx';
 import FindingList from './FindingList.jsx';
 
-export default function ReportEditor({ initialData, onSubmitted, onError }) {
+export default function ReportEditor({ initialData, extractionFailed, onSubmitted, onError }) {
   const [metadata, setMetadata] = useState(initialData.metadata);
   const [report, setReport] = useState(initialData.report);
   const [submitting, setSubmitting] = useState(false);
@@ -59,6 +59,14 @@ export default function ReportEditor({ initialData, onSubmitted, onError }) {
   return (
     <form className="report-form" onSubmit={handleSubmit} noValidate>
       <h2>Review &amp; Complete Report</h2>
+
+      {extractionFailed && (
+        <div className="extraction-failed-banner" role="alert">
+          <strong>Transcription failed.</strong> The AI was unable to extract data from the
+          recording. All fields must be entered manually before submitting.
+        </div>
+      )}
+
       <p className="review-hint">
         Verify the transcribed data, enter the BBPS scores, then submit to generate the PDF.
       </p>
