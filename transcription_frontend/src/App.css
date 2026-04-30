@@ -417,6 +417,11 @@
   gap: 16px;
 }
 
+.procedure-id {
+  font-size: 0.9rem;
+  color: #555;
+}
+
 .submitted-card h2 {
   margin: 0;
   color: #1a6e3c;

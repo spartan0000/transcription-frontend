@@ -67,6 +67,9 @@ export default function App() {
           <div className="submitted-card">
             <h2>Report Submitted</h2>
             <p>The report has been saved and the PDF has been generated.</p>
+            {submittedResult?.procedure_id != null && (
+              <p className="procedure-id">Procedure ID: <strong>{submittedResult.procedure_id}</strong></p>
+            )}
             {submittedResult?.pdf_url && (
               <a
                 className="btn btn-record"
