@@ -1,20 +1,16 @@
 import { useState, useRef } from 'react';
 import { API_BASE } from '../apiConfig.js';
 
-// Returns YYYY-MM-DDTHH:MM:SS in local wall-clock time for datetime-local inputs.
 function nowAsDatetimeLocal() {
   const d = new Date();
   const tzOffset = d.getTimezoneOffset() * 60000;
   return new Date(d - tzOffset).toISOString().slice(0, 19);
 }
 
-// Converts a datetime-local string (YYYY-MM-DDTHH:MM:SS, no timezone) to a
-// full ISO 8601 string with the local UTC offset, e.g. 2026-04-27T09:14:32+12:00.
-// This is what Python's datetime / Pydantic expect for unambiguous parsing.
 function toISOWithOffset(datetimeLocalStr) {
   if (!datetimeLocalStr) return null;
-  const d = new Date(datetimeLocalStr); // JS treats no-tz string as local time
-  const offsetMins = -d.getTimezoneOffset(); // positive = east of UTC
+  const d = new Date(datetimeLocalStr);
+  const offsetMins = -d.getTimezoneOffset();
   const sign = offsetMins >= 0 ? '+' : '-';
   const abs = Math.abs(offsetMins);
   const hh = String(Math.floor(abs / 60)).padStart(2, '0');
@@ -24,40 +20,82 @@ function toISOWithOffset(datetimeLocalStr) {
 
 export default function AudioRecorder({ onTranscribed, onError }) {
   const [phase, setPhase] = useState('idle'); // idle | recording | uploading
+  const [transcript, setTranscript] = useState('');
+  const [interimText, setInterimText] = useState('');
   const [cecumTime, setCecumTime] = useState('');
   const [procedureEndTime, setProcedureEndTime] = useState('');
-  const mediaRecorderRef = useRef(null);
-  const chunksRef = useRef([]);
+
+  const recognitionRef = useRef(null);
+  const transcriptRef = useRef('');   // stable ref for use inside event handlers
+  const shouldUploadRef = useRef(false);
   const fileInputRef = useRef(null);
 
-  async function startRecording() {
-    chunksRef.current = [];
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const recorder = new MediaRecorder(stream);
-    mediaRecorderRef.current = recorder;
+  function startRecording() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      onError('Speech recognition is not supported in this browser. Please use Chrome.');
+      return;
+    }
 
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data);
+    transcriptRef.current = '';
+    setTranscript('');
+    setInterimText('');
+    shouldUploadRef.current = false;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-NZ';
+    recognitionRef.current = recognition;
+
+    recognition.onresult = (event) => {
+      let newFinal = '';
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const text = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          newFinal += text;
+        } else {
+          interim += text;
+        }
+      }
+      if (newFinal) {
+        transcriptRef.current += newFinal;
+        setTranscript(transcriptRef.current);
+      }
+      setInterimText(interim);
     };
 
-    recorder.onstop = () => {
-      stream.getTracks().forEach((t) => t.stop());
-      uploadRecording();
+    recognition.onerror = (event) => {
+      if (event.error !== 'aborted') {
+        onError(`Speech recognition error: ${event.error}`);
+        setPhase('idle');
+      }
     };
 
-    recorder.start();
+    recognition.onend = () => {
+      setInterimText('');
+      if (shouldUploadRef.current) {
+        shouldUploadRef.current = false;
+        uploadTranscript();
+      }
+    };
+
+    recognition.start();
     setPhase('recording');
   }
 
   function stopRecording() {
-    mediaRecorderRef.current?.stop();
+    shouldUploadRef.current = true;
     setPhase('uploading');
+    recognitionRef.current?.stop();
   }
 
-  async function uploadRecording() {
-    const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+  async function uploadTranscript() {
+    const text = transcriptRef.current.trim();
+    const blob = new Blob([text], { type: 'text/plain' });
     const formData = new FormData();
-    formData.append('file', blob, 'recording.webm');
+    formData.append('file', blob, 'transcript.txt');
     await upload(formData);
   }
 
@@ -77,10 +115,6 @@ export default function AudioRecorder({ onTranscribed, onError }) {
     if (cecumISO) formData.append('cecum_reached_time', cecumISO);
     if (endISO) formData.append('procedure_end_time', endISO);
 
-    for (let [k, v] of formData.entries()) {
-      console.log(k, v);
-    }
-
     try {
       const res = await fetch(`${API_BASE}/transcribe`, {
         method: 'POST',
@@ -95,7 +129,7 @@ export default function AudioRecorder({ onTranscribed, onError }) {
     }
   }
 
-  const showControls = phase === 'idle' || phase === 'recording';
+  const showTimestamps = phase === 'idle' || phase === 'recording';
 
   return (
     <div className="recorder-card">
@@ -104,7 +138,7 @@ export default function AudioRecorder({ onTranscribed, onError }) {
         Use the buttons to stamp timestamps at the correct moment, or type a time manually.
       </p>
 
-      {showControls && (
+      {showTimestamps && (
         <div className="timestamp-section">
           <div className="timestamp-row">
             <button
@@ -142,6 +176,13 @@ export default function AudioRecorder({ onTranscribed, onError }) {
         </div>
       )}
 
+      {phase === 'recording' && (
+        <div className="transcript-preview">
+          <span className="transcript-final">{transcript}</span>
+          <span className="transcript-interim">{interimText}</span>
+        </div>
+      )}
+
       {phase === 'idle' && (
         <div className="recorder-actions">
           <button className="btn btn-record" onClick={startRecording}>
@@ -154,12 +195,12 @@ export default function AudioRecorder({ onTranscribed, onError }) {
             className="btn btn-upload"
             onClick={() => fileInputRef.current.click()}
           >
-            Upload Audio File
+            Send Test File
           </button>
           <input
             ref={fileInputRef}
             type="file"
-            accept="audio/*"
+            accept=".txt,text/plain"
             hidden
             onChange={handleFileSelected}
           />
@@ -169,7 +210,7 @@ export default function AudioRecorder({ onTranscribed, onError }) {
       {phase === 'recording' && (
         <div className="recording-indicator">
           <span className="pulse-dot" />
-          <span>Recording…</span>
+          <span>Listening…</span>
           <button className="btn btn-stop" onClick={stopRecording}>
             Stop &amp; Submit
           </button>
@@ -177,7 +218,7 @@ export default function AudioRecorder({ onTranscribed, onError }) {
       )}
 
       {phase === 'uploading' && (
-        <p className="uploading-msg">Uploading and transcribing, please wait…</p>
+        <p className="uploading-msg">Sending transcript for processing, please wait…</p>
       )}
     </div>
   );
