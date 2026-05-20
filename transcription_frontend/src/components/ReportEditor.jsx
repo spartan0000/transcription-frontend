@@ -68,7 +68,7 @@ export default function ReportEditor({ initialData, extractionFailed, onSubmitte
       )}
 
       <p className="review-hint">
-        Verify the transcribed data, enter the BBPS scores, then submit to generate the PDF.
+        Verify the transcribed data, enter the BBPS scores, then finalize to generate the PDF.
       </p>
 
       <MetadataSection metadata={metadata} onChange={patchMetadata} />
@@ -83,7 +83,7 @@ export default function ReportEditor({ initialData, extractionFailed, onSubmitte
           className="btn btn-submit"
           disabled={submitting || !bbpsComplete}
         >
-          {submitting ? 'Submitting…' : 'Submit and Generate PDF'}
+          {submitting ? 'Finalizing…' : 'Finalize Report'}
         </button>
         {!bbpsComplete && (
           <span className="submit-hint">All BBPS segment scores are required to submit.</span>
