@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AudioRecorder from './components/AudioRecorder.jsx';
 import ReportEditor from './components/ReportEditor.jsx';
-import { API_ORIGIN } from './apiConfig.js';
+import { API_BASE, API_ORIGIN } from './apiConfig.js';
 import './App.css';
+
+const STORAGE_KEY = 'pending_transcript_id';
 
 export default function App() {
   const [phase, setPhase] = useState('record'); // record | review | submitted
@@ -10,8 +12,33 @@ export default function App() {
   const [extractionFailed, setExtractionFailed] = useState(false);
   const [submittedResult, setSubmittedResult] = useState(null);
   const [error, setError] = useState(null);
+  const [recovering, setRecovering] = useState(false);
+
+  useEffect(() => {
+    const transcriptId = localStorage.getItem(STORAGE_KEY);
+    if (!transcriptId) return;
+
+    setRecovering(true);
+    fetch(`${API_BASE}/transcripts/${transcriptId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        setReportData(data.report);
+        setExtractionFailed(data.status === 'failed');
+        setPhase('review');
+      })
+      .catch(() => {
+        localStorage.removeItem(STORAGE_KEY);
+      })
+      .finally(() => setRecovering(false));
+  }, []);
 
   function handleTranscribed(data) {
+    if (data.transcript_id) {
+      localStorage.setItem(STORAGE_KEY, data.transcript_id);
+    }
     setReportData(data.report);
     setExtractionFailed(data.status === 'failed');
     setError(null);
@@ -19,6 +46,7 @@ export default function App() {
   }
 
   function handleSubmitted(result) {
+    localStorage.removeItem(STORAGE_KEY);
     setSubmittedResult(result);
     setError(null);
     setPhase('submitted');
@@ -29,11 +57,25 @@ export default function App() {
   }
 
   function reset() {
+    localStorage.removeItem(STORAGE_KEY);
     setPhase('record');
     setReportData(null);
     setExtractionFailed(false);
     setSubmittedResult(null);
     setError(null);
+  }
+
+  if (recovering) {
+    return (
+      <div className="app">
+        <header className="app-header">
+          <h1>Colonoscopy Report</h1>
+        </header>
+        <main className="app-main">
+          <p className="uploading-msg">Restoring your previous session…</p>
+        </main>
+      </div>
+    );
   }
 
   return (
