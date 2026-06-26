@@ -4,12 +4,14 @@ A React + Vite single-page application that transcribes colonoscopy procedure di
 
 ## Workflow
 
-1. **Transcribe** — the browser's built-in Web Speech API (`webkitSpeechRecognition`) captures and transcribes the procedure dictation in real time. The endoscopist stamps **Cecum Reached** and **Procedure Finished** timestamps during the procedure. On stop, the transcript text and timestamps are uploaded as `multipart/form-data` to `/api/transcribe`, which passes them to an LLM for structured data extraction.
-2. **Review & complete** — the backend returns a `{ report, status }` envelope. If `status` is `'failed'`, a warning banner is shown and all fields must be entered manually. Otherwise the extracted `ColonoscopyReportWithMetadata` is rendered as an editable form for the endoscopist to verify and complete.
-3. **Submit** — the completed report is POSTed to `/api/write`, which writes to the database and generates a PDF. The PDF opens automatically in a new tab and a procedure ID is shown on the success screen.
+1. **Start procedure** — the endoscopist clicks **Start Procedure**, which calls `POST /api/transcripts/start` to create a new transcript record in the database and returns a `transcript_id`. This ID is held in browser state for the remainder of the session.
+2. **Transcribe** — the browser's built-in Web Speech API (`webkitSpeechRecognition`) captures and transcribes the procedure dictation in real time. The endoscopist stamps **Cecum Reached** and **Procedure Finished** timestamps during the procedure. On stop, the transcript text and timestamps are uploaded as `multipart/form-data` to `/api/transcribe/{transcript_id}`, which passes them to an LLM for structured data extraction.
+3. **Review & complete** — the backend returns a `{ report, status, transcript_id }` envelope. If `status` is `'failed'`, a warning banner is shown and all fields must be entered manually. Otherwise the extracted `ColonoscopyReportWithMetadata` is rendered as an editable form for the endoscopist to verify and complete.
+4. **Submit** — the completed report is POSTed to `/api/write`, which writes to the database and generates a PDF. The PDF opens automatically in a new tab and a procedure ID is shown on the success screen.
 
 ## Recording page
 
+- **Start Procedure** — calls the backend to create a new transcript record and obtain a `transcript_id`. The timestamp controls and recording buttons only appear after this step succeeds.
 - **Start Recording** — activates the microphone and begins live speech-to-text. Finalised words appear in solid text; words still being processed appear greyed and italic.
 - **Stop & Submit** — stops recognition and sends the full transcript to the backend.
 - **Cecum Reached / Procedure Finished** buttons — stamp the current local time into editable datetime fields. Fields can also be typed into manually if a button was missed.
@@ -33,7 +35,8 @@ The submit button is disabled until all three BBPS segment scores have been sele
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| `POST` | `/transcribe` | `multipart/form-data`: `file` (text/plain transcript), optional `cecum_reached_time` and `procedure_end_time` (ISO 8601 with offset) | `{ report: ColonoscopyReportWithMetadata, status: "success" \| "failed" }` |
+| `POST` | `/transcripts/start` | _(none)_ | `{ transcript_id: int }` |
+| `POST` | `/transcribe/{transcript_id}` | `multipart/form-data`: `file` (text/plain transcript), optional `cecum_reached_time` and `procedure_end_time` (ISO 8601 with offset) | `{ report: ColonoscopyReportWithMetadata, status: "success" \| "failed", transcript_id: int }` |
 | `POST` | `/write` | `ColonoscopyReportWithMetadataFinal` JSON | `{ procedure_id, pdf_url }` |
 
 Timestamps are sent as full ISO 8601 strings with local UTC offset (e.g. `2026-04-28T09:14:32+12:00`) so Python's `datetime` / Pydantic parse them unambiguously.
