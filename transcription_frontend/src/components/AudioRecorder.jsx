@@ -19,7 +19,8 @@ function toISOWithOffset(datetimeLocalStr) {
 }
 
 export default function AudioRecorder({ onTranscribed, onError }) {
-  const [phase, setPhase] = useState('idle'); // idle | recording | uploading
+  const [phase, setPhase] = useState('pre-start'); // pre-start | starting | idle | recording | uploading
+  const [transcriptId, setTranscriptId] = useState(null);
   const [transcript, setTranscript] = useState('');
   const [interimText, setInterimText] = useState('');
   const [cecumTime, setCecumTime] = useState('');
@@ -29,6 +30,20 @@ export default function AudioRecorder({ onTranscribed, onError }) {
   const transcriptRef = useRef('');   // stable ref for use inside event handlers
   const shouldUploadRef = useRef(false);
   const fileInputRef = useRef(null);
+
+  async function startProcedure() {
+    setPhase('starting');
+    try {
+      const res = await fetch(`${API_BASE}/transcripts/start`, { method: 'POST' });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const data = await res.json();
+      setTranscriptId(data.transcript_id);
+      setPhase('idle');
+    } catch (err) {
+      setPhase('pre-start');
+      onError(err.message);
+    }
+  }
 
   function startRecording() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -116,7 +131,7 @@ export default function AudioRecorder({ onTranscribed, onError }) {
     if (endISO) formData.append('procedure_end_time', endISO);
 
     try {
-      const res = await fetch(`${API_BASE}/transcribe`, {
+      const res = await fetch(`${API_BASE}/transcribe/${transcriptId}`, {
         method: 'POST',
         body: formData,
       });
@@ -137,6 +152,18 @@ export default function AudioRecorder({ onTranscribed, onError }) {
       <p className="recorder-hint">
         Use the buttons to stamp timestamps at the correct moment, or type a time manually.
       </p>
+
+      {phase === 'pre-start' && (
+        <div className="recorder-actions">
+          <button className="btn btn-record" onClick={startProcedure}>
+            Start Procedure
+          </button>
+        </div>
+      )}
+
+      {phase === 'starting' && (
+        <p className="uploading-msg">Starting procedure…</p>
+      )}
 
       {showTimestamps && (
         <div className="timestamp-section">
