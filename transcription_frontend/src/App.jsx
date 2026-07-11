@@ -8,6 +8,29 @@ import './App.css';
 
 const STORAGE_KEY = 'pending_transcript_id';
 
+function draftToReportData(draft) {
+  return {
+    metadata: {
+      patient_name: draft.patient_name,
+      patient_NHI: draft.patient_id,
+      patient_dob: draft.patient_dob,
+      procedure_date: draft.procedure_date,
+      endoscopist_id: draft.endoscopist_id,
+      indication: draft.indication,
+    },
+    report: {
+      cecum_reached: draft.cecum_reached,
+      cecum_reached_time: draft.cecum_reached_time,
+      procedure_end_time: draft.procedure_end_time,
+      bbps_right: draft.bbps_right,
+      bbps_transverse: draft.bbps_transverse,
+      bbps_left: draft.bbps_left,
+      polyps: draft.polyps ?? [],
+      findings: draft.findings ?? [],
+    },
+  };
+}
+
 export default function App() {
   const [token, setToken] = useState(null);
   const [username, setUsername] = useState(null);
@@ -27,7 +50,7 @@ export default function App() {
     setRecovering(true);
     apiRequest(`/transcripts/${transcriptId}/draft`, { token })
       .then((data) => {
-        setReportData(data.report);
+        setReportData(draftToReportData(data));
         setExtractionFailed(data.status === 'failed');
         setPhase('review');
       })
