@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
+import AuthForm from './components/AuthForm.jsx';
 import AudioRecorder from './components/AudioRecorder.jsx';
 import ReportEditor from './components/ReportEditor.jsx';
-import { API_BASE, API_ORIGIN } from './apiConfig.js';
+import { apiRequest } from './api.js';
+import { API_ORIGIN } from './apiConfig.js';
 import './App.css';
 
 const STORAGE_KEY = 'pending_transcript_id';
 
 export default function App() {
+  const [token, setToken] = useState(null);
+  const [username, setUsername] = useState(null);
   const [phase, setPhase] = useState('record'); // record | review | submitted
   const [reportData, setReportData] = useState(null);
   const [extractionFailed, setExtractionFailed] = useState(false);
@@ -15,15 +19,13 @@ export default function App() {
   const [recovering, setRecovering] = useState(false);
 
   useEffect(() => {
+    if (!token) return;
+
     const transcriptId = localStorage.getItem(STORAGE_KEY);
     if (!transcriptId) return;
 
     setRecovering(true);
-    fetch(`${API_BASE}/transcripts/${transcriptId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Server error: ${res.status}`);
-        return res.json();
-      })
+    apiRequest(`/transcripts/${transcriptId}/draft`, { token })
       .then((data) => {
         setReportData(data.report);
         setExtractionFailed(data.status === 'failed');
@@ -33,7 +35,23 @@ export default function App() {
         localStorage.removeItem(STORAGE_KEY);
       })
       .finally(() => setRecovering(false));
-  }, []);
+  }, [token]);
+
+  function handleLogin(newToken, loggedInAs) {
+    setToken(newToken);
+    setUsername(loggedInAs);
+    setError(null);
+  }
+
+  function handleLogout() {
+    setToken(null);
+    setUsername(null);
+    setPhase('record');
+    setReportData(null);
+    setExtractionFailed(false);
+    setSubmittedResult(null);
+    setError(null);
+  }
 
   function handleTranscribed(data) {
     if (data.transcript_id) {
@@ -52,8 +70,15 @@ export default function App() {
     setPhase('submitted');
   }
 
-  function handleError(msg) {
-    setError(msg);
+  function handleError(err) {
+    const message = err instanceof Error ? err.message : err;
+    const status = err instanceof Error ? err.status : null;
+    if (status === 401) {
+      handleLogout();
+      setError('Your session has expired. Please log in again.');
+      return;
+    }
+    setError(message);
   }
 
   function reset() {
@@ -65,23 +90,16 @@ export default function App() {
     setError(null);
   }
 
-  if (recovering) {
-    return (
-      <div className="app">
-        <header className="app-header">
-          <h1>Colonoscopy Report</h1>
-        </header>
-        <main className="app-main">
-          <p className="uploading-msg">Restoring your previous session…</p>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="app">
       <header className="app-header">
         <h1>Colonoscopy Report</h1>
+        {token && (
+          <div className="header-user">
+            <span>{username}</span>
+            <button className="btn btn-logout" onClick={handleLogout}>Log Out</button>
+          </div>
+        )}
       </header>
 
       <main className="app-main">
@@ -92,12 +110,19 @@ export default function App() {
           </div>
         )}
 
-        {phase === 'record' && (
-          <AudioRecorder onTranscribed={handleTranscribed} onError={handleError} />
+        {!token && <AuthForm onLogin={handleLogin} />}
+
+        {token && recovering && (
+          <p className="uploading-msg">Restoring your previous session…</p>
         )}
 
-        {phase === 'review' && reportData && (
+        {token && !recovering && phase === 'record' && (
+          <AudioRecorder token={token} onTranscribed={handleTranscribed} onError={handleError} />
+        )}
+
+        {token && !recovering && phase === 'review' && reportData && (
           <ReportEditor
+            token={token}
             initialData={reportData}
             extractionFailed={extractionFailed}
             onSubmitted={handleSubmitted}
@@ -105,7 +130,7 @@ export default function App() {
           />
         )}
 
-        {phase === 'submitted' && (
+        {token && !recovering && phase === 'submitted' && (
           <div className="submitted-card">
             <h2>Report Submitted</h2>
             <p>The report has been saved and the PDF has been generated.</p>
