@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { API_BASE, API_ORIGIN } from '../apiConfig.js';
+import { apiRequest } from '../api.js';
+import { API_ORIGIN } from '../apiConfig.js';
 import MetadataSection from './MetadataSection.jsx';
 import ProcedureSection from './ProcedureSection.jsx';
 import BBPSSection from './BBPSSection.jsx';
 import PolypList from './PolypList.jsx';
 import FindingList from './FindingList.jsx';
 
-export default function ReportEditor({ initialData, extractionFailed, onSubmitted, onError }) {
+export default function ReportEditor({ token, initialData, extractionFailed, onSubmitted, onError }) {
   const [metadata, setMetadata] = useState(initialData.metadata);
   const [report, setReport] = useState(initialData.report);
   const [submitting, setSubmitting] = useState(false);
@@ -40,17 +41,16 @@ export default function ReportEditor({ initialData, extractionFailed, onSubmitte
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE}/write`, {
+      const result = await apiRequest('/write', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        token,
       });
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      const result = await res.json();
       if (result.pdf_url) window.open(`${API_ORIGIN}${result.pdf_url}`, '_blank', 'noopener,noreferrer');
       onSubmitted(result);
     } catch (err) {
-      onError(err.message);
+      onError(err);
     } finally {
       setSubmitting(false);
     }

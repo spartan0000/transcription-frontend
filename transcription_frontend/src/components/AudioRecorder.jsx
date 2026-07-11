@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { API_BASE } from '../apiConfig.js';
+import { apiRequest } from '../api.js';
 
 function nowAsDatetimeLocal() {
   const d = new Date();
@@ -18,7 +18,7 @@ function toISOWithOffset(datetimeLocalStr) {
   return `${datetimeLocalStr}${sign}${hh}:${mm}`;
 }
 
-export default function AudioRecorder({ onTranscribed, onError }) {
+export default function AudioRecorder({ token, onTranscribed, onError }) {
   const [phase, setPhase] = useState('pre-start'); // pre-start | starting | idle | recording | uploading
   const [transcriptId, setTranscriptId] = useState(null);
   const [transcript, setTranscript] = useState('');
@@ -34,14 +34,12 @@ export default function AudioRecorder({ onTranscribed, onError }) {
   async function startProcedure() {
     setPhase('starting');
     try {
-      const res = await fetch(`${API_BASE}/transcripts/start`, { method: 'POST' });
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      const data = await res.json();
+      const data = await apiRequest('/transcripts/start', { method: 'POST', token });
       setTranscriptId(data.transcript_id);
       setPhase('idle');
     } catch (err) {
       setPhase('pre-start');
-      onError(err.message);
+      onError(err);
     }
   }
 
@@ -131,16 +129,15 @@ export default function AudioRecorder({ onTranscribed, onError }) {
     if (endISO) formData.append('procedure_end_time', endISO);
 
     try {
-      const res = await fetch(`${API_BASE}/transcribe/${transcriptId}`, {
+      const data = await apiRequest(`/transcribe/${transcriptId}`, {
         method: 'POST',
         body: formData,
+        token,
       });
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      const data = await res.json();
       onTranscribed(data);
     } catch (err) {
       setPhase('idle');
-      onError(err.message);
+      onError(err);
     }
   }
 

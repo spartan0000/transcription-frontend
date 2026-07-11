@@ -13,6 +13,10 @@
   color: #fff;
   padding: 16px 32px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .app-header h1 {
@@ -21,6 +25,22 @@
   font-weight: 600;
   letter-spacing: 0.02em;
 }
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.9rem;
+  color: #dce6f0;
+}
+
+.btn-logout {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.22); }
 
 .app-main {
   flex: 1;
@@ -131,6 +151,39 @@
   margin-top: 12px;
 }
 .btn-secondary:hover { background: #d0d9e4; }
+
+/* ── Auth Card ───────────────────────────────────────────── */
+.auth-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  padding: 40px;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-info {
+  color: #1a6e3c;
+  margin: 0 0 16px;
+}
+
+.auth-switch {
+  background: none;
+  border: none;
+  color: #1a3a5c;
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  padding: 0;
+  align-self: center;
+}
+.auth-switch:hover { color: #24527e; }
 
 /* ── Recorder Card ───────────────────────────────────────── */
 .recorder-card {
