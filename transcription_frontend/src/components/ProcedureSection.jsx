@@ -1,3 +1,5 @@
+import { toDatetimeLocal, fromDatetimeLocal } from '../utils/datetime.js';
+
 export default function ProcedureSection({ report, onChange }) {
   return (
     <section className="form-section">
@@ -13,6 +15,7 @@ export default function ProcedureSection({ report, onChange }) {
                 cecum_reached: e.target.value === '' ? null : e.target.value === 'true',
               })
             }
+            required
           >
             <option value="">— select —</option>
             <option value="true">Yes</option>
@@ -24,10 +27,11 @@ export default function ProcedureSection({ report, onChange }) {
           <label htmlFor="cecum_reached_time">Cecum Reached Time</label>
           <input
             id="cecum_reached_time"
-            type="text"
-            placeholder="e.g. 09:14:32"
-            value={report.cecum_reached_time ?? ''}
-            onChange={(e) => onChange({ cecum_reached_time: e.target.value || null })}
+            type="datetime-local"
+            step="1"
+            value={toDatetimeLocal(report.cecum_reached_time)}
+            onChange={(e) => onChange({ cecum_reached_time: fromDatetimeLocal(e.target.value) })}
+            required
           />
         </div>
 
@@ -35,10 +39,11 @@ export default function ProcedureSection({ report, onChange }) {
           <label htmlFor="procedure_end_time">Procedure End Time</label>
           <input
             id="procedure_end_time"
-            type="text"
-            placeholder="e.g. 09:28:45"
-            value={report.procedure_end_time ?? ''}
-            onChange={(e) => onChange({ procedure_end_time: e.target.value || null })}
+            type="datetime-local"
+            step="1"
+            value={toDatetimeLocal(report.procedure_end_time)}
+            onChange={(e) => onChange({ procedure_end_time: fromDatetimeLocal(e.target.value) })}
+            required
           />
         </div>
 

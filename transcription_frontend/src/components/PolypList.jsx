@@ -9,11 +9,11 @@ function labelFor(value) {
   return value ? value.replace(/_/g, ' ') : '— select —';
 }
 
-function SelectField({ id, label, value, options, onChange }) {
+function SelectField({ id, label, value, options, onChange, required }) {
   return (
     <div className="field-group">
       <label htmlFor={id}>{label}</label>
-      <select id={id} value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}>
+      <select id={id} value={value ?? ''} onChange={(e) => onChange(e.target.value || null)} required={required}>
         <option value="">— select —</option>
         {options.map((o) => (
           <option key={o} value={o}>{labelFor(o)}</option>
@@ -92,6 +92,7 @@ export default function PolypList({ polyps, onChange }) {
               value={polyp.location}
               options={LOCATIONS}
               onChange={(v) => updatePolyp(i, { location: v })}
+              required
             />
 
             <SelectField
