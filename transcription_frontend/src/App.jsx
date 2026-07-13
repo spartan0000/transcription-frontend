@@ -35,6 +35,7 @@ export default function App() {
   const [token, setToken] = useState(null);
   const [username, setUsername] = useState(null);
   const [phase, setPhase] = useState('record'); // record | review | submitted
+  const [transcriptId, setTranscriptId] = useState(null);
   const [reportData, setReportData] = useState(null);
   const [extractionFailed, setExtractionFailed] = useState(false);
   const [submittedResult, setSubmittedResult] = useState(null);
@@ -50,6 +51,7 @@ export default function App() {
     setRecovering(true);
     apiRequest(`/transcripts/${transcriptId}/draft`, { token })
       .then((data) => {
+        setTranscriptId(data.transcript_id);
         setReportData(draftToReportData(data));
         setExtractionFailed(data.status === 'failed');
         setPhase('review');
@@ -70,6 +72,7 @@ export default function App() {
     setToken(null);
     setUsername(null);
     setPhase('record');
+    setTranscriptId(null);
     setReportData(null);
     setExtractionFailed(false);
     setSubmittedResult(null);
@@ -79,6 +82,7 @@ export default function App() {
   function handleTranscribed(data) {
     if (data.transcript_id) {
       localStorage.setItem(STORAGE_KEY, data.transcript_id);
+      setTranscriptId(data.transcript_id);
     }
     setReportData(data.report);
     setExtractionFailed(data.status === 'failed');
@@ -107,6 +111,7 @@ export default function App() {
   function reset() {
     localStorage.removeItem(STORAGE_KEY);
     setPhase('record');
+    setTranscriptId(null);
     setReportData(null);
     setExtractionFailed(false);
     setSubmittedResult(null);
@@ -146,6 +151,7 @@ export default function App() {
         {token && !recovering && phase === 'review' && reportData && (
           <ReportEditor
             token={token}
+            transcriptId={transcriptId}
             initialData={reportData}
             extractionFailed={extractionFailed}
             onSubmitted={handleSubmitted}

@@ -7,7 +7,34 @@ import BBPSSection from './BBPSSection.jsx';
 import PolypList from './PolypList.jsx';
 import FindingList from './FindingList.jsx';
 
-export default function ReportEditor({ token, initialData, extractionFailed, onSubmitted, onError }) {
+function getValidationIssues(report) {
+  const issues = [];
+  if (report.cecum_reached == null) issues.push('Cecum Reached (yes/no)');
+  if (!report.cecum_reached_time) issues.push('Cecum Reached Time');
+  if (!report.procedure_end_time) issues.push('Procedure End Time');
+  if (
+    report.bbps_right == null ||
+    report.bbps_transverse == null ||
+    report.bbps_left == null
+  ) {
+    issues.push('All three BBPS segment scores');
+  }
+  (report.polyps ?? []).forEach((p, i) => {
+    if (!p.location) issues.push(`Polyp ${i + 1} location`);
+  });
+  return issues;
+}
+
+// morphology/resection_method are strict enums with no null option in the
+// backend schema; omit them entirely rather than send an unset value as null.
+function sanitizePolyp({ morphology, resection_method, ...rest }) {
+  const sanitized = { ...rest };
+  if (morphology != null) sanitized.morphology = morphology;
+  if (resection_method != null) sanitized.resection_method = resection_method;
+  return sanitized;
+}
+
+export default function ReportEditor({ token, transcriptId, initialData, extractionFailed, onSubmitted, onError }) {
   const [metadata, setMetadata] = useState(initialData.metadata);
   const [report, setReport] = useState(initialData.report);
   const [submitting, setSubmitting] = useState(false);
@@ -20,28 +47,29 @@ export default function ReportEditor({ token, initialData, extractionFailed, onS
     setReport((prev) => ({ ...prev, ...patch }));
   }
 
-  const bbpsComplete =
-    report.bbps_right != null &&
-    report.bbps_transverse != null &&
-    report.bbps_left != null;
+  const issues = getValidationIssues(report);
+  const canSubmit = issues.length === 0;
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!bbpsComplete) {
-      onError('Please enter all three BBPS segment scores before submitting.');
+    if (!canSubmit) {
+      onError(`Please complete the following before submitting: ${issues.join(', ')}.`);
       return;
     }
 
     // eslint-disable-next-line no-unused-vars
-    const { withdrawal_time, ...reportFields } = report;
+    const { withdrawal_time, polyps, ...reportFields } = report;
     const payload = {
       metadata,
-      report: reportFields,
+      report: {
+        ...reportFields,
+        polyps: (polyps ?? []).map(sanitizePolyp),
+      },
     };
 
     setSubmitting(true);
     try {
-      const result = await apiRequest('/write', {
+      const result = await apiRequest(`/write?transcript_id=${transcriptId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -81,12 +109,12 @@ export default function ReportEditor({ token, initialData, extractionFailed, onS
         <button
           type="submit"
           className="btn btn-submit"
-          disabled={submitting || !bbpsComplete}
+          disabled={submitting || !canSubmit}
         >
           {submitting ? 'Finalizing…' : 'Finalize Report'}
         </button>
-        {!bbpsComplete && (
-          <span className="submit-hint">All BBPS segment scores are required to submit.</span>
+        {!canSubmit && (
+          <span className="submit-hint">Missing: {issues.join(', ')}.</span>
         )}
       </div>
     </form>

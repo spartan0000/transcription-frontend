@@ -1,22 +1,6 @@
 import { useState, useRef } from 'react';
 import { apiRequest } from '../api.js';
-
-function nowAsDatetimeLocal() {
-  const d = new Date();
-  const tzOffset = d.getTimezoneOffset() * 60000;
-  return new Date(d - tzOffset).toISOString().slice(0, 19);
-}
-
-function toISOWithOffset(datetimeLocalStr) {
-  if (!datetimeLocalStr) return null;
-  const d = new Date(datetimeLocalStr);
-  const offsetMins = -d.getTimezoneOffset();
-  const sign = offsetMins >= 0 ? '+' : '-';
-  const abs = Math.abs(offsetMins);
-  const hh = String(Math.floor(abs / 60)).padStart(2, '0');
-  const mm = String(abs % 60).padStart(2, '0');
-  return `${datetimeLocalStr}${sign}${hh}:${mm}`;
-}
+import { nowAsDatetimeLocal, fromDatetimeLocal } from '../utils/datetime.js';
 
 export default function AudioRecorder({ token, onTranscribed, onError }) {
   const [phase, setPhase] = useState('pre-start'); // pre-start | starting | idle | recording | uploading
@@ -123,8 +107,8 @@ export default function AudioRecorder({ token, onTranscribed, onError }) {
   }
 
   async function upload(formData) {
-    const cecumISO = toISOWithOffset(cecumTime);
-    const endISO = toISOWithOffset(procedureEndTime);
+    const cecumISO = fromDatetimeLocal(cecumTime);
+    const endISO = fromDatetimeLocal(procedureEndTime);
     if (cecumISO) formData.append('cecum_reached_time', cecumISO);
     if (endISO) formData.append('procedure_end_time', endISO);
 
