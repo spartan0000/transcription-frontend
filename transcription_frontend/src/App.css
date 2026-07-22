@@ -203,6 +203,22 @@
   margin-inline: auto;
 }
 
+.pre-start-section {
+  max-width: 480px;
+  margin: 0 auto 24px;
+  text-align: left;
+}
+
+.pre-start-section .recorder-actions {
+  margin-top: 20px;
+}
+
+.pre-start-section .submit-hint {
+  display: block;
+  text-align: center;
+  margin-top: 10px;
+}
+
 .transcript-preview {
   background: #f4f8fc;
   border: 1px solid #c8d5e2;

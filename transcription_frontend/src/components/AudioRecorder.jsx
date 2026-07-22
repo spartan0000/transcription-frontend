@@ -9,6 +9,11 @@ export default function AudioRecorder({ token, onTranscribed, onError }) {
   const [interimText, setInterimText] = useState('');
   const [cecumTime, setCecumTime] = useState('');
   const [procedureEndTime, setProcedureEndTime] = useState('');
+  const [patientName, setPatientName] = useState('');
+  const [patientDob, setPatientDob] = useState('');
+  const [patientNhi, setPatientNhi] = useState('');
+
+  const canStart = patientName.trim() !== '' && patientDob !== '' && patientNhi.trim() !== '';
 
   const recognitionRef = useRef(null);
   const transcriptRef = useRef('');   // stable ref for use inside event handlers
@@ -16,9 +21,22 @@ export default function AudioRecorder({ token, onTranscribed, onError }) {
   const fileInputRef = useRef(null);
 
   async function startProcedure() {
+    if (!canStart) {
+      onError('Please enter patient name, date of birth, and NHI number before starting.');
+      return;
+    }
     setPhase('starting');
     try {
-      const data = await apiRequest('/transcripts/start', { method: 'POST', token });
+      const data = await apiRequest('/transcripts/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patient_name: patientName.trim(),
+          patient_dob: patientDob,
+          patient_nhi: patientNhi.trim(),
+        }),
+        token,
+      });
       setTranscriptId(data.transcript_id);
       setPhase('idle');
     } catch (err) {
@@ -135,10 +153,52 @@ export default function AudioRecorder({ token, onTranscribed, onError }) {
       </p>
 
       {phase === 'pre-start' && (
-        <div className="recorder-actions">
-          <button className="btn btn-record" onClick={startProcedure}>
-            Start Procedure
-          </button>
+        <div className="pre-start-section">
+          <div className="two-col">
+            <div className="field-group">
+              <label htmlFor="patient_name">Patient Name</label>
+              <input
+                id="patient_name"
+                type="text"
+                value={patientName}
+                onChange={(e) => setPatientName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="field-group">
+              <label htmlFor="patient_dob">Date of Birth</label>
+              <input
+                id="patient_dob"
+                type="date"
+                value={patientDob}
+                onChange={(e) => setPatientDob(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="field-group col-span-2">
+              <label htmlFor="patient_nhi">NHI Number</label>
+              <input
+                id="patient_nhi"
+                type="text"
+                value={patientNhi}
+                onChange={(e) => setPatientNhi(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="recorder-actions">
+            <button className="btn btn-record" onClick={startProcedure} disabled={!canStart}>
+              Start Procedure
+            </button>
+          </div>
+          {!canStart && (
+            <span className="submit-hint">
+              Patient name, date of birth, and NHI number are required to start.
+            </span>
+          )}
         </div>
       )}
 
