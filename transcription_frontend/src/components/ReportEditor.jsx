@@ -7,8 +7,13 @@ import BBPSSection from './BBPSSection.jsx';
 import PolypList from './PolypList.jsx';
 import FindingList from './FindingList.jsx';
 
-function getValidationIssues(report) {
+function getValidationIssues(metadata, report) {
   const issues = [];
+  if (!metadata.patient_name) issues.push('Patient name');
+  if (!metadata.patient_NHI) issues.push('NHI number');
+  if (!metadata.patient_dob) issues.push('Date of birth');
+  if (!metadata.procedure_date) issues.push('Procedure date');
+  if (metadata.endoscopist_id == null) issues.push('Endoscopist ID');
   if (report.cecum_reached == null) issues.push('Cecum Reached (yes/no)');
   if (!report.cecum_reached_time) issues.push('Cecum Reached Time');
   if (!report.procedure_end_time) issues.push('Procedure End Time');
@@ -20,6 +25,7 @@ function getValidationIssues(report) {
     issues.push('All three BBPS segment scores');
   }
   (report.polyps ?? []).forEach((p, i) => {
+    if (p.size_mm == null) issues.push(`Polyp ${i + 1} size`);
     if (!p.location) issues.push(`Polyp ${i + 1} location`);
   });
   return issues;
@@ -27,10 +33,24 @@ function getValidationIssues(report) {
 
 // morphology/resection_method are strict enums with no null option in the
 // backend schema; omit them entirely rather than send an unset value as null.
-function sanitizePolyp({ morphology, resection_method, ...rest }) {
-  const sanitized = { ...rest };
+// polyp_id is required, but extraction can return it as null — fall back to
+// position order.
+function sanitizePolyp({ morphology, resection_method, ...rest }, index) {
+  const sanitized = { ...rest, polyp_id: rest.polyp_id ?? index + 1 };
   if (morphology != null) sanitized.morphology = morphology;
   if (resection_method != null) sanitized.resection_method = resection_method;
+  return sanitized;
+}
+
+function sanitizeFinding(finding, index) {
+  return { ...finding, finding_id: finding.finding_id ?? index + 1 };
+}
+
+// indication is a non-nullable optional string in the final schema — omit
+// rather than send null.
+function sanitizeMetadata({ indication, ...rest }) {
+  const sanitized = { ...rest };
+  if (indication != null) sanitized.indication = indication;
   return sanitized;
 }
 
@@ -47,7 +67,7 @@ export default function ReportEditor({ token, transcriptId, initialData, extract
     setReport((prev) => ({ ...prev, ...patch }));
   }
 
-  const issues = getValidationIssues(report);
+  const issues = getValidationIssues(metadata, report);
   const canSubmit = issues.length === 0;
 
   async function handleSubmit(e) {
@@ -58,12 +78,13 @@ export default function ReportEditor({ token, transcriptId, initialData, extract
     }
 
     // eslint-disable-next-line no-unused-vars
-    const { withdrawal_time, polyps, ...reportFields } = report;
+    const { withdrawal_time, polyps, findings, ...reportFields } = report;
     const payload = {
-      metadata,
+      metadata: sanitizeMetadata(metadata),
       report: {
         ...reportFields,
         polyps: (polyps ?? []).map(sanitizePolyp),
+        findings: (findings ?? []).map(sanitizeFinding),
       },
     };
 

@@ -8,13 +8,30 @@ import './App.css';
 
 const STORAGE_KEY = 'pending_transcript_id';
 
+// patient_dob comes back from the backend as a full datetime; the date inputs
+// and the final /write schema both need plain YYYY-MM-DD.
+function dateOnly(value) {
+  return value ? String(value).slice(0, 10) : value;
+}
+
+function normalizeReportData(data) {
+  return {
+    ...data,
+    metadata: {
+      ...data.metadata,
+      patient_dob: dateOnly(data.metadata?.patient_dob),
+      procedure_date: dateOnly(data.metadata?.procedure_date),
+    },
+  };
+}
+
 function draftToReportData(draft) {
   return {
     metadata: {
       patient_name: draft.patient_name,
       patient_NHI: draft.patient_id,
-      patient_dob: draft.patient_dob,
-      procedure_date: draft.procedure_date,
+      patient_dob: dateOnly(draft.patient_dob),
+      procedure_date: dateOnly(draft.procedure_date),
       endoscopist_id: draft.endoscopist_id,
       indication: draft.indication,
     },
@@ -84,7 +101,7 @@ export default function App() {
       localStorage.setItem(STORAGE_KEY, data.transcript_id);
       setTranscriptId(data.transcript_id);
     }
-    setReportData(data.report);
+    setReportData(normalizeReportData(data.report));
     setExtractionFailed(data.status === 'failed');
     setError(null);
     setPhase('review');
