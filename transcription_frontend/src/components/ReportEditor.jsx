@@ -6,6 +6,7 @@ import ProcedureSection from './ProcedureSection.jsx';
 import BBPSSection from './BBPSSection.jsx';
 import PolypList from './PolypList.jsx';
 import FindingList from './FindingList.jsx';
+import { CRITERIA_KEYS, criteriaSatisfied } from '../utils/cecalCriteria.js';
 
 function getValidationIssues(metadata, report) {
   const issues = [];
@@ -15,8 +16,18 @@ function getValidationIssues(metadata, report) {
   if (!metadata.procedure_date) issues.push('Procedure date');
   if (metadata.endoscopist_id == null) issues.push('Endoscopist ID');
   if (report.cecum_reached == null) issues.push('Cecum Reached (yes/no)');
-  if (!report.cecum_reached_time) issues.push('Cecum Reached Time');
+  if (report.cecum_reached === true && !report.cecum_reached_time) issues.push('Cecum Reached Time');
+  if (report.cecum_reached === true && !criteriaSatisfied(report)) {
+    issues.push('At least one cecal intubation criterion');
+  }
   if (!report.procedure_end_time) issues.push('Procedure End Time');
+  if (
+    report.cecum_reached_time &&
+    report.procedure_end_time &&
+    new Date(report.procedure_end_time) < new Date(report.cecum_reached_time)
+  ) {
+    issues.push('Procedure End Time must not be before Cecum Reached Time');
+  }
   if (
     report.bbps_right == null ||
     report.bbps_transverse == null ||
@@ -58,6 +69,11 @@ export default function ReportEditor({ token, transcriptId, initialData, extract
   const [metadata, setMetadata] = useState(initialData.metadata);
   const [report, setReport] = useState(initialData.report);
   const [submitting, setSubmitting] = useState(false);
+  // criteria the LLM extracted as true, frozen at mount so the AI badges don't
+  // follow the user's own edits
+  const [aiDetected] = useState(
+    () => new Set(CRITERIA_KEYS.filter((k) => initialData.report?.[k] === true)),
+  );
 
   function patchMetadata(patch) {
     setMetadata((prev) => ({ ...prev, ...patch }));
@@ -83,6 +99,8 @@ export default function ReportEditor({ token, transcriptId, initialData, extract
       metadata: sanitizeMetadata(metadata),
       report: {
         ...reportFields,
+        // DB constraint: cecum_reached_time must be empty when cecum not reached
+        cecum_reached_time: report.cecum_reached === false ? null : report.cecum_reached_time,
         polyps: (polyps ?? []).map(sanitizePolyp),
         findings: (findings ?? []).map(sanitizeFinding),
       },
@@ -121,7 +139,7 @@ export default function ReportEditor({ token, transcriptId, initialData, extract
       </p>
 
       <MetadataSection metadata={metadata} onChange={patchMetadata} />
-      <ProcedureSection report={report} onChange={patchReport} />
+      <ProcedureSection report={report} onChange={patchReport} aiDetected={aiDetected} />
       <BBPSSection report={report} onChange={patchReport} />
       <PolypList polyps={report.polyps ?? []} onChange={(p) => patchReport({ polyps: p })} />
       <FindingList findings={report.findings ?? []} onChange={(f) => patchReport({ findings: f })} />
