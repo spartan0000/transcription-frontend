@@ -108,7 +108,7 @@ export default function ReportEditor({ token, transcriptId, initialData, extract
 
     setSubmitting(true);
     try {
-      const result = await apiRequest(`/write?transcript_id=${transcriptId}`, {
+      const result = await apiRequest(`transcripts/${transcriptId}/write`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
